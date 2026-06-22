@@ -1,0 +1,110 @@
+[
+  {
+    "channel_name": "ai_news",
+    "message_id": 1,
+    "message_text": "ИИ помогает автоматизировать рутинные задачи.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "ai_news",
+    "message_id": 2,
+    "message_text": "Новая модель лучше справляется с анализом текстов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "ai_news",
+    "message_id": 3,
+    "message_text": "Компании внедряют искусственный интеллект в поддержку клиентов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "tech_daily",
+    "message_id": 1,
+    "message_text": "Производители смартфонов представили новые энергоэффективные чипы.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "tech_daily",
+    "message_id": 2,
+    "message_text": "Облачные сервисы расширяют инструменты для разработчиков.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "tech_daily",
+    "message_id": 3,
+    "message_text": "Кибербезопасность остается ключевым приоритетом для бизнеса.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 1,
+    "message_text": "Гибридный формат работы помогает командам сохранять баланс.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 2,
+    "message_text": "Работодатели чаще инвестируют в обучение сотрудников.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 3,
+    "message_text": "Команды пересматривают процессы планирования задач.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 4,
+    "message_text": "Спрос на специалистов по данным продолжает расти.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "economy_watch",
+    "message_id": 1,
+    "message_text": "Рынки ожидают новых данных по инфляции.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "economy_watch",
+    "message_id": 2,
+    "message_text": "Малый бизнес адаптируется к изменению потребительского спроса.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "economy_watch",
+    "message_id": 3,
+    "message_text": "Эксперты обсуждают влияние процентных ставок на инвестиции.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "economy_watch",
+    "message_id": 4,
+    "message_text": "Компании осторожно планируют бюджеты на следующий квартал.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "future_trends",
+    "message_id": 1,
+    "message_text": "Автоматизация меняет требования к цифровым навыкам сотрудников.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "future_trends",
+    "message_id": 2,
+    "message_text": "Технологические стартапы ищут новые ниши в корпоративном секторе.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "future_trends",
+    "message_id": 3,
+    "message_text": "Инвесторы внимательно следят за рынком ИИ-инструментов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "future_trends",
+    "message_id": 4,
+    "message_text": "Удаленная работа усиливает спрос на надежные сервисы коммуникации.",
+    "message_date": "2026-06-22"
+  }
+]

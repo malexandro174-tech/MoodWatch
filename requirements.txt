@@ -1,0 +1,6 @@
+streamlit
+pandas
+telethon
+python-dotenv
+pyyaml
+# deepseek is not installed in the current environment; verify the package name before adding it.
