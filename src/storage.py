@@ -16,7 +16,7 @@ DATABASE_PATH = Path(__file__).resolve().parent.parent / "data" / "moodwatch.db"
 
 
 def create_database() -> None:
-    """Create the SQLite database file and the raw_messages table if needed."""
+    """Create the SQLite database file and application tables if needed."""
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     with sqlite3.connect(DATABASE_PATH) as connection:
@@ -33,6 +33,158 @@ def create_database() -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS analysis_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic TEXT,
+                run_date TEXT,
+                total_messages INTEGER,
+                positive_count INTEGER,
+                neutral_count INTEGER,
+                negative_count INTEGER,
+                dominant_sentiment TEXT
+            )
+            """
+        )
+
+
+def create_analysis_runs_table() -> None:
+    """Create the analysis_runs table if needed."""
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS analysis_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic TEXT,
+                run_date TEXT,
+                total_messages INTEGER,
+                positive_count INTEGER,
+                neutral_count INTEGER,
+                negative_count INTEGER,
+                dominant_sentiment TEXT
+            )
+            """
+        )
+
+
+def insert_analysis_run(
+    topic: str,
+    total_messages: int,
+    positive_count: int,
+    neutral_count: int,
+    negative_count: int,
+    dominant_sentiment: str,
+    run_date: str | None = None,
+) -> None:
+    """Insert one analysis run into the history table."""
+    if run_date is None:
+        run_date = datetime.now(timezone.utc).isoformat()
+
+    create_analysis_runs_table()
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute(
+            """
+            INSERT INTO analysis_runs (
+                topic,
+                run_date,
+                total_messages,
+                positive_count,
+                neutral_count,
+                negative_count,
+                dominant_sentiment
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                topic,
+                run_date,
+                total_messages,
+                positive_count,
+                neutral_count,
+                negative_count,
+                dominant_sentiment,
+            ),
+        )
+
+
+def get_analysis_runs() -> list[dict[str, object]]:
+    """Return analysis runs ordered from newest to oldest."""
+    create_analysis_runs_table()
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                run_date,
+                total_messages,
+                positive_count,
+                neutral_count,
+                negative_count,
+                dominant_sentiment
+            FROM analysis_runs
+            ORDER BY id DESC
+            """
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def get_last_runs(limit: int = 2) -> list[dict[str, object]]:
+    """Return the latest analysis runs ordered from newest to oldest."""
+    create_analysis_runs_table()
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                run_date,
+                total_messages,
+                positive_count,
+                neutral_count,
+                negative_count,
+                dominant_sentiment
+            FROM analysis_runs
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def get_analysis_runs_by_topic(topic: str) -> list[dict[str, object]]:
+    """Return analysis runs for a topic ordered from oldest to newest."""
+    create_analysis_runs_table()
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        cursor = connection.execute(
+            """
+            SELECT
+                id,
+                topic,
+                run_date,
+                total_messages,
+                positive_count,
+                neutral_count,
+                negative_count,
+                dominant_sentiment
+            FROM analysis_runs
+            WHERE topic = ?
+            ORDER BY run_date ASC, id ASC
+            """,
+            (topic,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
 
 
 def insert_raw_message(
