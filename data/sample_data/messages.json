@@ -2,109 +2,361 @@
   {
     "channel_name": "ai_news",
     "message_id": 1,
-    "message_text": "ИИ помогает автоматизировать рутинные задачи.",
+    "message_text": "Искусственный интеллект помогает автоматизировать рутинные задачи и ускоряет работу аналитиков.",
     "message_date": "2026-06-22"
   },
   {
     "channel_name": "ai_news",
     "message_id": 2,
-    "message_text": "Новая модель лучше справляется с анализом текстов.",
+    "message_text": "ИИ улучшает поиск документов и дает новые возможности для поддержки клиентов.",
     "message_date": "2026-06-22"
   },
   {
     "channel_name": "ai_news",
     "message_id": 3,
-    "message_text": "Компании внедряют искусственный интеллект в поддержку клиентов.",
+    "message_text": "Некоторые эксперты видят риск сокращение рабочих мест из-за ИИ.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "tech_daily",
+    "channel_name": "ai_watch",
     "message_id": 1,
-    "message_text": "Производители смартфонов представили новые энергоэффективные чипы.",
+    "message_text": "Нейросети уже используют в медицине, образовании и маркетинге.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "tech_daily",
+    "channel_name": "ai_watch",
     "message_id": 2,
-    "message_text": "Облачные сервисы расширяют инструменты для разработчиков.",
+    "message_text": "GPT-инструменты помогают командам быстрее готовить черновики и успешно тестировать гипотезы.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "tech_daily",
+    "channel_name": "ai_watch",
     "message_id": 3,
-    "message_text": "Кибербезопасность остается ключевым приоритетом для бизнеса.",
+    "message_text": "Развитие LLM вызывает страх у специалистов, которые не успевают осваивать новые навыки.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "work_life",
+    "channel_name": "future_ai",
     "message_id": 1,
-    "message_text": "Гибридный формат работы помогает командам сохранять баланс.",
+    "message_text": "Автоматизация на базе ИИ приносит польза бизнесу и снижает нагрузку на операторов.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "work_life",
+    "channel_name": "future_ai",
     "message_id": 2,
-    "message_text": "Работодатели чаще инвестируют в обучение сотрудников.",
+    "message_text": "Искусственный интеллект обсуждают на конференции как инструмент для анализа больших данных.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "work_life",
+    "channel_name": "future_ai",
     "message_id": 3,
-    "message_text": "Команды пересматривают процессы планирования задач.",
+    "message_text": "Внедрение нейронные сети иногда идет сложно из-за нехватки качественных данных.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "work_life",
-    "message_id": 4,
-    "message_text": "Спрос на специалистов по данным продолжает расти.",
+    "channel_name": "ml_digest",
+    "message_id": 1,
+    "message_text": "AI-сервисы делают работу с отчетами удобно и повышают эффективность команд.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "ml_digest",
+    "message_id": 2,
+    "message_text": "Новая нейронная сеть распознает документы и классифицирует обращения пользователей.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "ml_digest",
+    "message_id": 3,
+    "message_text": "Компании опасаются, что ошибка ИИ может создать проблема для клиентов.",
     "message_date": "2026-06-22"
   },
   {
     "channel_name": "economy_watch",
     "message_id": 1,
-    "message_text": "Рынки ожидают новых данных по инфляции.",
+    "message_text": "Экономика показывает рост, а малый бизнес успешно адаптируется к новым условиям.",
     "message_date": "2026-06-22"
   },
   {
     "channel_name": "economy_watch",
     "message_id": 2,
-    "message_text": "Малый бизнес адаптируется к изменению потребительского спроса.",
+    "message_text": "Рынки ожидают свежих данных по инфляция и динамике цен.",
     "message_date": "2026-06-22"
   },
   {
     "channel_name": "economy_watch",
     "message_id": 3,
-    "message_text": "Эксперты обсуждают влияние процентных ставок на инвестиции.",
+    "message_text": "Высокие цены создают проблема для семейных бюджетов и усиливают страх потребителей.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "economy_watch",
-    "message_id": 4,
-    "message_text": "Компании осторожно планируют бюджеты на следующий квартал.",
-    "message_date": "2026-06-22"
-  },
-  {
-    "channel_name": "future_trends",
+    "channel_name": "macro_daily",
     "message_id": 1,
-    "message_text": "Автоматизация меняет требования к цифровым навыкам сотрудников.",
+    "message_text": "Бизнес отмечает развитие экспортных направлений и новые возможности на рынке.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "future_trends",
+    "channel_name": "macro_daily",
     "message_id": 2,
-    "message_text": "Технологические стартапы ищут новые ниши в корпоративном секторе.",
+    "message_text": "Экономика региона зависит от инвестиций, логистики и потребительского спроса.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "future_trends",
+    "channel_name": "macro_daily",
     "message_id": 3,
-    "message_text": "Инвесторы внимательно следят за рынком ИИ-инструментов.",
+    "message_text": "Падение доходы населения может стать угроза для розничного рынка.",
     "message_date": "2026-06-22"
   },
   {
-    "channel_name": "future_trends",
-    "message_id": 4,
-    "message_text": "Удаленная работа усиливает спрос на надежные сервисы коммуникации.",
+    "channel_name": "finance_pulse",
+    "message_id": 1,
+    "message_text": "Снижение ставок помогает компаниям планировать инвестиции и ускоряет рост.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "finance_pulse",
+    "message_id": 2,
+    "message_text": "Рынок облигаций внимательно реагирует на новости центрального банка.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "finance_pulse",
+    "message_id": 3,
+    "message_text": "Инфляция и нестабильность валюты повышают риск для импортеров.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "business_today",
+    "message_id": 1,
+    "message_text": "Бизнес использует автоматизация процессов, чтобы улучшает эффективность поставок.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "business_today",
+    "message_id": 2,
+    "message_text": "Цены на сырье остаются главным фактором для промышленности.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "business_today",
+    "message_id": 3,
+    "message_text": "Кризис спроса приносит убыток отдельным компаниям и усложняет планирование.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "remote_work",
+    "message_id": 1,
+    "message_text": "Удаленная работа помогает сотрудникам сохранять баланс и повышает эффективность.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "remote_work",
+    "message_id": 2,
+    "message_text": "Удалёнка стала обычным форматом для распределенных команд.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "remote_work",
+    "message_id": 3,
+    "message_text": "Удаленная работа иногда создает проблема коммуникации и чувство изоляции.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 1,
+    "message_text": "Гибридная работа удобно сочетает офис и домашний формат.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 2,
+    "message_text": "Офис остается важным местом для встреч, планирования и командных обсуждений.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "work_life",
+    "message_id": 3,
+    "message_text": "Работа из дома может идти сложно, если нет отдельного рабочего места.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "team_remote",
+    "message_id": 1,
+    "message_text": "Сотрудники говорят, что удаленка улучшает концентрацию и дает больше возможностей.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "team_remote",
+    "message_id": 2,
+    "message_text": "Команды согласуют правила созвонов, чтобы удаленная работа была предсказуемой.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "team_remote",
+    "message_id": 3,
+    "message_text": "Долгая удалёнка вызывает страх выгорания и риск потери связи с коллегами.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "office_shift",
+    "message_id": 1,
+    "message_text": "Работодатели успешно внедряют гибкую работа и сокращают лишние поездки.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "office_shift",
+    "message_id": 2,
+    "message_text": "Офисные дни чаще используют для стратегических сессий и обучения.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "office_shift",
+    "message_id": 3,
+    "message_text": "Переход на удаленная работа без процессов приводит к нестабильность в задачах.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "labor_market",
+    "message_id": 1,
+    "message_text": "Рынок труда показывает рост спроса на инженеров данных и аналитиков.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "labor_market",
+    "message_id": 2,
+    "message_text": "Занятость в сервисных профессиях остается стабильной после сезонного всплеска.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "labor_market",
+    "message_id": 3,
+    "message_text": "Сокращение вакансий в отдельных отраслях вызывает страх у соискателей.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "career_news",
+    "message_id": 1,
+    "message_text": "Профессия аналитика данных дает возможности для развития и роста дохода.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "career_news",
+    "message_id": 2,
+    "message_text": "Рынок труда постепенно меняет требования к навыкам кандидатов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "career_news",
+    "message_id": 3,
+    "message_text": "Нестабильность занятость в стартапах создает риск для молодых специалистов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "jobs_today",
+    "message_id": 1,
+    "message_text": "Компании успешно открывают стажировки, а рынок труда помогает новичкам войти в профессию.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "jobs_today",
+    "message_id": 2,
+    "message_text": "Работодатели обсуждают зарплатные вилки и формат собеседований.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "jobs_today",
+    "message_id": 3,
+    "message_text": "Кандидаты жалуются, что поиск работа стал сложно из-за длинных этапов отбора.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "hr_digest",
+    "message_id": 1,
+    "message_text": "Обучение сотрудников улучшает удержание и приносит польза бизнесу.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "hr_digest",
+    "message_id": 2,
+    "message_text": "Рынок труда реагирует на автоматизацию и новые форматы работы.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "hr_digest",
+    "message_id": 3,
+    "message_text": "Сокращение отделов поддержки стало угроза для части сотрудников.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "crypto_daily",
+    "message_id": 1,
+    "message_text": "Криптовалюты показывают рост после новостей о запуске новых сервисов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "crypto_daily",
+    "message_id": 2,
+    "message_text": "Рынок криптовалюты ожидает решения регуляторов и крупных бирж.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "crypto_daily",
+    "message_id": 3,
+    "message_text": "Падение биткоина усилило страх инвесторов и принесло убыток трейдерам.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "blockchain_watch",
+    "message_id": 1,
+    "message_text": "Блокчейн-проекты обещают удобство платежей, а криптовалюты дают новые возможности.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "blockchain_watch",
+    "message_id": 2,
+    "message_text": "Криптовалюты обсуждают в контексте регулирования, налогов и защиты пользователей.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "blockchain_watch",
+    "message_id": 3,
+    "message_text": "Риск мошенничества остается проблема для криптовалюты и новых инвесторов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "defi_pulse",
+    "message_id": 1,
+    "message_text": "DeFi-сервисы ускоряет расчеты и помогает пользователям управлять активами.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "defi_pulse",
+    "message_id": 2,
+    "message_text": "Криптовалюты остаются волатильным активом для частных инвесторов.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "defi_pulse",
+    "message_id": 3,
+    "message_text": "Нестабильность стейблкоинов может создать кризис доверия к криптовалюты.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "web3_ru",
+    "message_id": 1,
+    "message_text": "Криптовалюты помогают переводить средства быстрее и иногда удобно заменяют дорогие платежи.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "web3_ru",
+    "message_id": 2,
+    "message_text": "Инвесторы сравнивают криптовалюты с акциями, облигациями и сырьевыми активами.",
+    "message_date": "2026-06-22"
+  },
+  {
+    "channel_name": "web3_ru",
+    "message_id": 3,
+    "message_text": "Угроза взломов и сложность хранения кошельков сдерживают развитие криптовалюты.",
     "message_date": "2026-06-22"
   }
 ]
