@@ -174,8 +174,66 @@ def ensure_data_source_loaded(data_source: str) -> None:
     """Load selected JSON data into local storage for analysis."""
     messages_path = DATA_SOURCES[data_source]
     messages = load_messages_from_json(messages_path) if messages_path else load_messages_from_json()
+    if data_source == "Telegram data" and not messages:
+        raise ValueError("Telegram data file is empty.")
+
     clear_raw_messages()
     save_messages_to_db(messages)
+
+
+def get_telegram_data_status() -> dict:
+    """Return summary details for the collected Telegram JSON file."""
+    messages = load_messages_from_json(TELEGRAM_MESSAGES_PATH)
+    if not messages:
+        return {
+            "messages": [],
+            "channels": [],
+            "earliest_date": "",
+            "latest_date": "",
+        }
+
+    channels = sorted(
+        {
+            str(message.get("channel_name", ""))
+            for message in messages
+            if message.get("channel_name")
+        }
+    )
+    dates = sorted(
+        str(message.get("message_date", ""))
+        for message in messages
+        if message.get("message_date")
+    )
+
+    return {
+        "messages": messages,
+        "channels": channels,
+        "earliest_date": dates[0] if dates else "",
+        "latest_date": dates[-1] if dates else "",
+    }
+
+
+def render_telegram_data_status() -> bool:
+    """Show Telegram source status and return True when data is available."""
+    try:
+        status = get_telegram_data_status()
+    except FileNotFoundError:
+        st.warning("Telegram data file is missing or empty. Run the Telegram collector first.")
+        return False
+
+    messages = status["messages"]
+    if not messages:
+        st.warning("Telegram data file is missing or empty. Run the Telegram collector first.")
+        return False
+
+    st.caption("Данные Telegram")
+    st.write("Source file: data/telegram_messages.json")
+    st.write(f"Loaded messages: {len(messages)}")
+    st.write(f"Channels: {', '.join(status['channels'])}")
+    st.write(
+        f"Date range: {status['earliest_date']} → {status['latest_date']}"
+    )
+    return True
 
 
 def show_sentiment_distribution(stats: dict) -> None:
@@ -196,25 +254,26 @@ def render_home_page() -> None:
     """Render the project overview page."""
     st.title("MoodWatch")
     st.write(
-        "MoodWatch анализирует сообщения по выбранной теме и формирует "
-        "Markdown-отчёт о распределении тональности."
+        "MoodWatch анализирует сообщения Telegram-каналов по выбранной теме "
+        "и формирует Markdown-отчёт о распределении тональности."
     )
 
     st.subheader("Статус интеграций")
     status_columns = st.columns(2)
-    status_columns[0].metric("Telegram", "planned")
+    status_columns[0].metric("Telegram", "connected")
     status_columns[1].metric("DeepSeek", "planned")
 
     st.info(
-        "Текущая версия использует тестовые JSON-данные и словарный анализ "
-        "тональности. Telegram и DeepSeek будут подключены позже."
+        "Текущая версия поддерживает анализ постов Telegram-каналов из JSON "
+        "и словарный анализ тональности. Анализ комментариев Telegram будет "
+        "добавлен на следующем этапе."
     )
 
     with st.expander("Ограничения версии", expanded=True):
         st.markdown(
-            "- данные берутся из тестового JSON-файла\n"
+            "- данные берутся из JSON-файлов Sample data или Telegram data\n"
             "- анализ тональности словарный\n"
-            "- Telegram и DeepSeek пока не подключены"
+            "- комментарии Telegram и DeepSeek пока не подключены"
         )
 
 
@@ -231,6 +290,9 @@ def render_analysis_page() -> None:
         horizontal=True,
         key="data_source",
     )
+    telegram_data_available = True
+    if data_source == "Telegram data":
+        telegram_data_available = render_telegram_data_status()
 
     st.subheader("Быстрый выбор темы")
     quick_topic_columns = st.columns(len(QUICK_TOPICS))
@@ -239,13 +301,19 @@ def render_analysis_page() -> None:
             st.session_state.topic = quick_topic.lower()
 
     topic = st.text_input("Тема для анализа", key="topic")
+    st.caption("You can select a quick topic or type any custom topic manually.")
 
     st.subheader("Отчёт")
     if st.button("Запустить анализ"):
+        if data_source == "Telegram data" and not telegram_data_available:
+            return
+
         try:
             ensure_data_source_loaded(data_source)
-        except FileNotFoundError:
-            st.error("Файл data/telegram_messages.json не найден.")
+        except (FileNotFoundError, ValueError):
+            st.warning(
+                "Telegram data file is missing or empty. Run the Telegram collector first."
+            )
             return
 
         analyzed_messages = analyze_messages(topic)
@@ -365,7 +433,7 @@ def main() -> None:
             ["Главная", "Анализ", "История"],
         )
         st.divider()
-        st.markdown("**Версия:** v0.1-alpha")
+        st.markdown("**Версия:** v0.2-beta")
         st.markdown(f"**Источник данных:** {st.session_state.data_source}")
         st.markdown("**Анализатор:** dictionary-based sentiment")
 
