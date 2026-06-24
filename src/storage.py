@@ -220,6 +220,14 @@ def insert_raw_message(
         )
 
 
+def clear_raw_messages() -> None:
+    """Remove loaded raw messages without touching analysis history."""
+    create_database()
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute("DELETE FROM raw_messages")
+
+
 def message_exists(channel_name: str, message_id: int) -> bool:
     """Return True if a message already exists for the channel and message ID."""
     with sqlite3.connect(DATABASE_PATH) as connection:

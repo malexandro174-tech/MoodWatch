@@ -18,6 +18,9 @@ from storage import create_database, insert_raw_message, message_exists
 SAMPLE_MESSAGES_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "sample_data" / "messages.json"
 )
+TELEGRAM_MESSAGES_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "telegram_messages.json"
+)
 
 
 def load_messages_from_json(json_path: Path = SAMPLE_MESSAGES_PATH) -> list[dict[str, Any]]:

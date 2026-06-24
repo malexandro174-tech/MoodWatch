@@ -7,9 +7,14 @@ from __future__ import annotations
 import streamlit as st
 
 from analyzer import analyze_messages
-from collector import load_messages_from_json, save_messages_to_db
+from collector import (
+    TELEGRAM_MESSAGES_PATH,
+    load_messages_from_json,
+    save_messages_to_db,
+)
 from report import build_summary, calculate_sentiment_stats, generate_report
 from storage import (
+    clear_raw_messages,
     get_analysis_runs,
     get_analysis_runs_by_topic,
     get_last_runs,
@@ -18,6 +23,10 @@ from storage import (
 
 
 DEFAULT_TOPIC = "искусственный интеллект"
+DATA_SOURCES = {
+    "Sample data": None,
+    "Telegram data": TELEGRAM_MESSAGES_PATH,
+}
 QUICK_TOPICS = [
     "Искусственный интеллект",
     "Экономика",
@@ -161,9 +170,11 @@ def build_comparison_summary(analysis_runs: list[dict]) -> str:
     return "\n\n".join(summaries)
 
 
-def ensure_sample_data_loaded() -> None:
-    """Load JSON sample data into local storage for the MVP demo."""
-    messages = load_messages_from_json()
+def ensure_data_source_loaded(data_source: str) -> None:
+    """Load selected JSON data into local storage for analysis."""
+    messages_path = DATA_SOURCES[data_source]
+    messages = load_messages_from_json(messages_path) if messages_path else load_messages_from_json()
+    clear_raw_messages()
     save_messages_to_db(messages)
 
 
@@ -214,6 +225,12 @@ def render_analysis_page() -> None:
         "Примеры тем: искусственный интеллект, экономика, удалённая работа, "
         "рынок труда, криптовалюты."
     )
+    data_source = st.radio(
+        "Источник данных:",
+        ["Sample data", "Telegram data"],
+        horizontal=True,
+        key="data_source",
+    )
 
     st.subheader("Быстрый выбор темы")
     quick_topic_columns = st.columns(len(QUICK_TOPICS))
@@ -225,7 +242,12 @@ def render_analysis_page() -> None:
 
     st.subheader("Отчёт")
     if st.button("Запустить анализ"):
-        ensure_sample_data_loaded()
+        try:
+            ensure_data_source_loaded(data_source)
+        except FileNotFoundError:
+            st.error("Файл data/telegram_messages.json не найден.")
+            return
+
         analyzed_messages = analyze_messages(topic)
         stats = calculate_sentiment_stats(analyzed_messages)
         report = generate_report(topic)
@@ -333,6 +355,8 @@ def main() -> None:
 
     if "topic" not in st.session_state:
         st.session_state.topic = DEFAULT_TOPIC
+    if "data_source" not in st.session_state:
+        st.session_state.data_source = "Sample data"
 
     with st.sidebar:
         st.header("MoodWatch")
@@ -342,7 +366,7 @@ def main() -> None:
         )
         st.divider()
         st.markdown("**Версия:** v0.1-alpha")
-        st.markdown("**Источник данных:** JSON sample data")
+        st.markdown(f"**Источник данных:** {st.session_state.data_source}")
         st.markdown("**Анализатор:** dictionary-based sentiment")
 
     if selected_section == "Главная":
