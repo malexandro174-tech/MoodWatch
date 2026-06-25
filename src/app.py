@@ -23,9 +23,11 @@ from storage import (
 
 
 DEFAULT_TOPIC = "искусственный интеллект"
+TELEGRAM_COMMENTS_PATH = TELEGRAM_MESSAGES_PATH.parent / "telegram_comments.json"
 DATA_SOURCES = {
     "Sample data": None,
-    "Telegram data": TELEGRAM_MESSAGES_PATH,
+    "Telegram posts": TELEGRAM_MESSAGES_PATH,
+    "Telegram comments": TELEGRAM_COMMENTS_PATH,
 }
 QUICK_TOPICS = [
     "Искусственный интеллект",
@@ -57,6 +59,27 @@ def build_messages_table(analyzed_messages: list[dict]) -> list[dict]:
         }
         for message in analyzed_messages
     ]
+
+
+def convert_comments_to_messages(comments: list[dict]) -> list[dict]:
+    """Convert Telegram comments JSON rows to analyzer-compatible messages."""
+    messages = []
+    for comment in comments:
+        comment_text = str(comment.get("comment_text", "")).strip()
+        if not comment_text:
+            continue
+
+        messages.append(
+            {
+                "channel_name": comment.get("channel_name", ""),
+                "message_id": comment.get("comment_id", ""),
+                "message_text": comment_text,
+                "message_date": comment.get("comment_date", ""),
+                "post_id": comment.get("post_id", ""),
+                "comment_id": comment.get("comment_id", ""),
+            }
+        )
+    return messages
 
 
 def build_analysis_history_table(analysis_runs: list[dict]) -> list[dict]:
@@ -173,15 +196,22 @@ def build_comparison_summary(analysis_runs: list[dict]) -> str:
 def ensure_data_source_loaded(data_source: str) -> None:
     """Load selected JSON data into local storage for analysis."""
     messages_path = DATA_SOURCES[data_source]
-    messages = load_messages_from_json(messages_path) if messages_path else load_messages_from_json()
-    if data_source == "Telegram data" and not messages:
-        raise ValueError("Telegram data file is empty.")
+    raw_messages = (
+        load_messages_from_json(messages_path) if messages_path else load_messages_from_json()
+    )
+    messages = (
+        convert_comments_to_messages(raw_messages)
+        if data_source == "Telegram comments"
+        else raw_messages
+    )
+    if data_source in {"Telegram posts", "Telegram comments"} and not messages:
+        raise ValueError(f"{data_source} file is empty.")
 
     clear_raw_messages()
     save_messages_to_db(messages)
 
 
-def get_telegram_data_status() -> dict:
+def get_telegram_posts_status() -> dict:
     """Return summary details for the collected Telegram JSON file."""
     messages = load_messages_from_json(TELEGRAM_MESSAGES_PATH)
     if not messages:
@@ -213,10 +243,10 @@ def get_telegram_data_status() -> dict:
     }
 
 
-def render_telegram_data_status() -> bool:
+def render_telegram_posts_status() -> bool:
     """Show Telegram source status and return True when data is available."""
     try:
-        status = get_telegram_data_status()
+        status = get_telegram_posts_status()
     except FileNotFoundError:
         st.warning("Telegram data file is missing or empty. Run the Telegram collector first.")
         return False
@@ -230,6 +260,73 @@ def render_telegram_data_status() -> bool:
     st.write("Source file: data/telegram_messages.json")
     st.write(f"Loaded messages: {len(messages)}")
     st.write(f"Channels: {', '.join(status['channels'])}")
+    st.write(
+        f"Date range: {status['earliest_date']} → {status['latest_date']}"
+    )
+    return True
+
+
+def get_telegram_comments_status() -> dict:
+    """Return summary details for the collected Telegram comments JSON file."""
+    comments = load_messages_from_json(TELEGRAM_COMMENTS_PATH)
+    if not comments:
+        return {
+            "comments": [],
+            "channels": [],
+            "related_posts": 0,
+            "earliest_date": "",
+            "latest_date": "",
+        }
+
+    channels = sorted(
+        {
+            str(comment.get("channel_name", ""))
+            for comment in comments
+            if comment.get("channel_name")
+        }
+    )
+    related_posts = {
+        comment.get("post_id")
+        for comment in comments
+        if comment.get("post_id") is not None
+    }
+    dates = sorted(
+        str(comment.get("comment_date", ""))
+        for comment in comments
+        if comment.get("comment_date")
+    )
+
+    return {
+        "comments": comments,
+        "channels": channels,
+        "related_posts": len(related_posts),
+        "earliest_date": dates[0] if dates else "",
+        "latest_date": dates[-1] if dates else "",
+    }
+
+
+def render_telegram_comments_status() -> bool:
+    """Show Telegram comments source status and return True when data is available."""
+    try:
+        status = get_telegram_comments_status()
+    except FileNotFoundError:
+        st.warning(
+            "Telegram comments file is missing or empty. Run the Telegram comments collector first."
+        )
+        return False
+
+    comments = status["comments"]
+    if not comments:
+        st.warning(
+            "Telegram comments file is missing or empty. Run the Telegram comments collector first."
+        )
+        return False
+
+    st.caption("Комментарии Telegram")
+    st.write("Source file: data/telegram_comments.json")
+    st.write(f"Loaded comments: {len(comments)}")
+    st.write(f"Channels: {', '.join(status['channels'])}")
+    st.write(f"Related posts: {status['related_posts']}")
     st.write(
         f"Date range: {status['earliest_date']} → {status['latest_date']}"
     )
@@ -271,9 +368,9 @@ def render_home_page() -> None:
 
     with st.expander("Ограничения версии", expanded=True):
         st.markdown(
-            "- данные берутся из JSON-файлов Sample data или Telegram data\n"
+            "- данные берутся из JSON-файлов Sample data, Telegram posts или Telegram comments\n"
             "- анализ тональности словарный\n"
-            "- комментарии Telegram и DeepSeek пока не подключены"
+            "- DeepSeek пока не подключен"
         )
 
 
@@ -286,13 +383,15 @@ def render_analysis_page() -> None:
     )
     data_source = st.radio(
         "Источник данных:",
-        ["Sample data", "Telegram data"],
+        ["Sample data", "Telegram posts", "Telegram comments"],
         horizontal=True,
         key="data_source",
     )
-    telegram_data_available = True
-    if data_source == "Telegram data":
-        telegram_data_available = render_telegram_data_status()
+    data_source_available = True
+    if data_source == "Telegram posts":
+        data_source_available = render_telegram_posts_status()
+    elif data_source == "Telegram comments":
+        data_source_available = render_telegram_comments_status()
 
     st.subheader("Быстрый выбор темы")
     quick_topic_columns = st.columns(len(QUICK_TOPICS))
@@ -305,15 +404,20 @@ def render_analysis_page() -> None:
 
     st.subheader("Отчёт")
     if st.button("Запустить анализ"):
-        if data_source == "Telegram data" and not telegram_data_available:
+        if data_source in {"Telegram posts", "Telegram comments"} and not data_source_available:
             return
 
         try:
             ensure_data_source_loaded(data_source)
         except (FileNotFoundError, ValueError):
-            st.warning(
-                "Telegram data file is missing or empty. Run the Telegram collector first."
-            )
+            if data_source == "Telegram comments":
+                st.warning(
+                    "Telegram comments file is missing or empty. Run the Telegram comments collector first."
+                )
+            else:
+                st.warning(
+                    "Telegram data file is missing or empty. Run the Telegram collector first."
+                )
             return
 
         analyzed_messages = analyze_messages(topic)
