@@ -82,65 +82,82 @@ async def fetch_comments_for_post(client, channel, channel_name, post):
     return comments
 
 
-async def main():
+async def collect_telegram_comments_async(channel_name: str, post_limit: int) -> dict:
+    """Collect Telegram comments and save them to JSON."""
     load_dotenv()
 
     api_id = int(os.getenv("TELEGRAM_API_ID"))
     api_hash = os.getenv("TELEGRAM_API_HASH")
+    client = build_client(api_id, api_hash)
+
+    try:
+        print("Connecting to Telegram DC2...")
+        await client.connect()
+
+        if not await client.is_user_authorized():
+            raise RuntimeError("Telegram session is not authorized. Run src/telegram_test.py first.")
+
+        print(f"Scanning latest {post_limit} posts from {channel_name}...")
+        channel = await client.get_entity(channel_name)
+        results = []
+        scanned_posts = 0
+        posts_with_comments = 0
+
+        async for post in client.iter_messages(channel, limit=post_limit):
+            scanned_posts += 1
+            replies_count = post.replies.replies if post.replies else 0
+
+            print(f"Post ID: {post.id}")
+            print(f"Replies/comments count: {replies_count}")
+
+            if replies_count <= 0:
+                print("Skipping comments fetch.")
+                print("===")
+                continue
+
+            comments = await fetch_comments_for_post(client, channel, channel_name, post)
+            if comments:
+                posts_with_comments += 1
+                results.extend(comments)
+
+            print(f"Fetched comments: {len(comments)}")
+            print("===")
+
+        OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT_PATH.write_text(
+            json.dumps(results, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+        return {
+            "scanned_posts": scanned_posts,
+            "posts_with_comments": posts_with_comments,
+            "saved_comments": len(results),
+            "output_file": str(OUTPUT_PATH),
+        }
+    finally:
+        await client.disconnect()
+
+
+def collect_telegram_comments(channel_username: str, limit: int) -> int:
+    """Synchronous wrapper for Streamlit."""
+    result = asyncio.run(collect_telegram_comments_async(channel_username, limit))
+    return int(result["saved_comments"])
+
+
+async def main():
     channel_name = input(
         f"Enter Telegram channel username [{DEFAULT_CHANNEL_NAME}]: "
     ).strip() or DEFAULT_CHANNEL_NAME
     post_limit = read_post_limit()
 
-    client = build_client(api_id, api_hash)
-
-    print("Connecting to Telegram DC2...")
-    await client.connect()
-
-    if not await client.is_user_authorized():
-        print("Telegram session is not authorized. Run src/telegram_test.py first.")
-        await client.disconnect()
-        return
-
-    print(f"Scanning latest {post_limit} posts from {channel_name}...")
-    channel = await client.get_entity(channel_name)
-    results = []
-    scanned_posts = 0
-    posts_with_comments = 0
-
-    async for post in client.iter_messages(channel, limit=post_limit):
-        scanned_posts += 1
-        replies_count = post.replies.replies if post.replies else 0
-
-        print(f"Post ID: {post.id}")
-        print(f"Replies/comments count: {replies_count}")
-
-        if replies_count <= 0:
-            print("Skipping comments fetch.")
-            print("===")
-            continue
-
-        comments = await fetch_comments_for_post(client, channel, channel_name, post)
-        if comments:
-            posts_with_comments += 1
-            results.extend(comments)
-
-        print(f"Fetched comments: {len(comments)}")
-        print("===")
-
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(
-        json.dumps(results, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    result = await collect_telegram_comments_async(channel_name, post_limit)
 
     print("Final summary:")
-    print(f"Scanned posts: {scanned_posts}")
-    print(f"Posts with comments: {posts_with_comments}")
-    print(f"Saved comments: {len(results)}")
-    print(f"Output file: {OUTPUT_PATH}")
-
-    await client.disconnect()
+    print(f"Scanned posts: {result['scanned_posts']}")
+    print(f"Posts with comments: {result['posts_with_comments']}")
+    print(f"Saved comments: {result['saved_comments']}")
+    print(f"Output file: {result['output_file']}")
 
 
 if __name__ == "__main__":

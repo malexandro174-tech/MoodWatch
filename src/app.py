@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from ai_insight import generate_ai_insight
 from analyzer import analyze_messages
 from collector import (
     TELEGRAM_MESSAGES_PATH,
@@ -20,6 +21,8 @@ from storage import (
     get_last_runs,
     insert_analysis_run,
 )
+from telegram_collect_test import collect_telegram_posts
+from telegram_comments_collector import collect_telegram_comments
 
 
 DEFAULT_TOPIC = "искусственный интеллект"
@@ -41,6 +44,8 @@ SENTIMENT_LABELS = {
     "neutral": "Нейтрально",
     "negative": "Негатив",
 }
+DEFAULT_TELEGRAM_CHANNEL = "Veles_Dubov"
+DEFAULT_TELEGRAM_LIMIT = 10
 
 
 def localize_sentiment(sentiment: str) -> str:
@@ -333,6 +338,41 @@ def render_telegram_comments_status() -> bool:
     return True
 
 
+def render_telegram_collection_controls(data_source: str) -> None:
+    """Render Telegram collection controls for posts or comments."""
+    st.subheader("Telegram collection")
+    channel_username = st.text_input(
+        "Channel username",
+        value=DEFAULT_TELEGRAM_CHANNEL,
+        key="telegram_collection_channel",
+    ).strip()
+    post_limit = st.number_input(
+        "Number of latest posts to scan",
+        min_value=1,
+        max_value=100,
+        value=DEFAULT_TELEGRAM_LIMIT,
+        step=1,
+        key="telegram_collection_limit",
+    )
+
+    if st.button("Collect / Refresh data"):
+        try:
+            with st.spinner("Collecting Telegram data..."):
+                if data_source == "Telegram posts":
+                    saved_items = collect_telegram_posts(
+                        channel_username or DEFAULT_TELEGRAM_CHANNEL,
+                        int(post_limit),
+                    )
+                else:
+                    saved_items = collect_telegram_comments(
+                        channel_username or DEFAULT_TELEGRAM_CHANNEL,
+                        int(post_limit),
+                    )
+            st.success(f"Collection completed.\n\nSaved items: {saved_items}")
+        except Exception as error:
+            st.error(str(error))
+
+
 def show_sentiment_distribution(stats: dict) -> None:
     """Show a compact horizontal sentiment distribution."""
     total = max(stats["total"], 1)
@@ -388,6 +428,9 @@ def render_analysis_page() -> None:
         key="data_source",
     )
     data_source_available = True
+    if data_source in {"Telegram posts", "Telegram comments"}:
+        render_telegram_collection_controls(data_source)
+
     if data_source == "Telegram posts":
         data_source_available = render_telegram_posts_status()
     elif data_source == "Telegram comments":
@@ -401,6 +444,14 @@ def render_analysis_page() -> None:
 
     topic = st.text_input("Тема для анализа", key="topic")
     st.caption("You can select a quick topic or type any custom topic manually.")
+
+    st.subheader("Analysis mode")
+    analysis_mode = st.radio(
+        "Режим анализа:",
+        ["Quick analysis (Dictionary)", "AI Insight (DeepSeek)"],
+        horizontal=True,
+        key="analysis_mode",
+    )
 
     st.subheader("Отчёт")
     if st.button("Запустить анализ"):
@@ -454,6 +505,27 @@ def render_analysis_page() -> None:
         st.markdown(f"**Найдено сообщений:** {stats['total']}")
         st.markdown(f"**Доминирующая тональность:** {dominant_sentiment}")
         st.markdown(build_summary(stats))
+
+        if analysis_mode == "AI Insight (DeepSeek)" and analyzed_messages:
+            with st.expander("🧠 AI Insight", expanded=True):
+                try:
+                    with st.spinner("Generating AI Insight..."):
+                        messages = [
+                            str(message.get("message_text", ""))
+                            for message in analyzed_messages
+                        ]
+                        ai_report = generate_ai_insight(
+                            messages,
+                            topic=topic,
+                            source=data_source,
+                            analysed_message_count=stats["total"],
+                            positive_count=stats["positive_count"],
+                            neutral_count=stats["neutral_count"],
+                            negative_count=stats["negative_count"],
+                        )
+                    st.markdown(ai_report)
+                except Exception:
+                    st.warning("AI Insight is temporarily unavailable.")
 
         st.download_button(
             label="Скачать отчёт (.md)",
