@@ -7,7 +7,7 @@ from __future__ import annotations
 import streamlit as st
 
 from ai_insight import generate_ai_insight
-from analyzer import analyze_messages
+from analyzer import analyze_messages, analyze_sentiment
 from collector import (
     TELEGRAM_MESSAGES_PATH,
     load_messages_from_json,
@@ -19,6 +19,7 @@ from storage import (
     get_analysis_runs,
     get_analysis_runs_by_topic,
     get_last_runs,
+    get_raw_messages,
     insert_analysis_run,
 )
 from telegram_collect_test import collect_telegram_posts
@@ -26,6 +27,7 @@ from telegram_comments_collector import collect_telegram_comments
 
 
 DEFAULT_TOPIC = "искусственный интеллект"
+ALL_MESSAGES_TOPIC = "All loaded messages/comments"
 TELEGRAM_COMMENTS_PATH = TELEGRAM_MESSAGES_PATH.parent / "telegram_comments.json"
 DATA_SOURCES = {
     "Sample data": None,
@@ -64,6 +66,61 @@ def build_messages_table(analyzed_messages: list[dict]) -> list[dict]:
         }
         for message in analyzed_messages
     ]
+
+
+def analyze_all_loaded_messages() -> list[dict]:
+    """Add dictionary sentiment to every currently loaded raw message."""
+    analyzed_messages = []
+    for message in get_raw_messages():
+        analyzed_message = dict(message)
+        analyzed_message["sentiment"] = analyze_sentiment(
+            str(analyzed_message.get("message_text", ""))
+        )
+        analyzed_messages.append(analyzed_message)
+    return analyzed_messages
+
+
+def generate_loaded_dataset_report(analyzed_messages: list[dict]) -> str:
+    """Generate a Markdown report for the full loaded dataset."""
+    stats = calculate_sentiment_stats(analyzed_messages)
+    summary = build_summary(stats)
+
+    lines = [
+        "# MoodWatch Report",
+        "",
+        f"## Тема: {ALL_MESSAGES_TOPIC}",
+        "",
+        "The whole loaded dataset was analysed.",
+        "",
+        f"Найдено сообщений: {stats['total']}",
+        "",
+        "## Распределение тональности",
+        "",
+        f"- Positive: {stats['positive_count']} ({stats['positive_percent']:.1f}%)",
+        f"- Neutral: {stats['neutral_count']} ({stats['neutral_percent']:.1f}%)",
+        f"- Negative: {stats['negative_count']} ({stats['negative_percent']:.1f}%)",
+        "",
+        f"Доминирующая тональность: {stats['dominant_sentiment']}",
+        "",
+        "## Итоговый вывод",
+        "",
+        summary,
+        "",
+        "## Первые 5 сообщений",
+        "",
+    ]
+
+    if not analyzed_messages:
+        lines.append("Сообщения не найдены.")
+    else:
+        for message in analyzed_messages[:5]:
+            lines.append(
+                f"- [{message['sentiment']}] "
+                f"[{message['channel_name']} #{message['message_id']}] "
+                f"{message['message_text']}"
+            )
+
+    return "\n".join(lines)
 
 
 def convert_comments_to_messages(comments: list[dict]) -> list[dict]:
@@ -216,6 +273,49 @@ def ensure_data_source_loaded(data_source: str) -> None:
     save_messages_to_db(messages)
 
 
+def reload_collected_data_source(data_source: str) -> None:
+    """Reload collected JSON data, clearing stale rows even when the file is empty."""
+    messages_path = DATA_SOURCES[data_source]
+    raw_messages = load_messages_from_json(messages_path)
+    messages = (
+        convert_comments_to_messages(raw_messages)
+        if data_source == "Telegram comments"
+        else raw_messages
+    )
+
+    clear_raw_messages()
+    if messages:
+        save_messages_to_db(messages)
+
+
+def build_telegram_collection_params(
+    data_source: str,
+    channel_username: str,
+    post_limit: int,
+) -> dict:
+    """Build comparable Telegram collection settings for session state."""
+    return {
+        "data_source": data_source,
+        "channel_username": channel_username or DEFAULT_TELEGRAM_CHANNEL,
+        "post_limit": int(post_limit),
+    }
+
+
+def is_telegram_collection_stale(current_params: dict) -> bool:
+    """Return True when current Telegram settings differ from last collection."""
+    last_params = st.session_state.get("telegram_last_collected_params")
+    if not last_params:
+        return False
+
+    return (
+        last_params.get("data_source") == current_params["data_source"]
+        and (
+            last_params.get("channel_username") != current_params["channel_username"]
+            or int(last_params.get("post_limit", 0)) != current_params["post_limit"]
+        )
+    )
+
+
 def get_telegram_posts_status() -> dict:
     """Return summary details for the collected Telegram JSON file."""
     messages = load_messages_from_json(TELEGRAM_MESSAGES_PATH)
@@ -338,7 +438,7 @@ def render_telegram_comments_status() -> bool:
     return True
 
 
-def render_telegram_collection_controls(data_source: str) -> None:
+def render_telegram_collection_controls(data_source: str) -> bool:
     """Render Telegram collection controls for posts or comments."""
     st.subheader("Telegram collection")
     channel_username = st.text_input(
@@ -355,22 +455,70 @@ def render_telegram_collection_controls(data_source: str) -> None:
         key="telegram_collection_limit",
     )
 
+    current_params = build_telegram_collection_params(
+        data_source,
+        channel_username,
+        int(post_limit),
+    )
+    st.session_state.telegram_collection_params = current_params
+    collection_is_stale = is_telegram_collection_stale(current_params)
+
+    summary_state = st.session_state.get("telegram_collection_summary")
+    if (
+        summary_state
+        and summary_state.get("data_source") == data_source
+        and not collection_is_stale
+    ):
+        st.success(summary_state["message"])
+
+    if collection_is_stale:
+        st.warning(
+            "Collection settings changed. Click 'Collect / Refresh data' before running analysis."
+        )
+
     if st.button("Collect / Refresh data"):
         try:
             with st.spinner("Collecting Telegram data..."):
                 if data_source == "Telegram posts":
-                    saved_items = collect_telegram_posts(
+                    collection_result = collect_telegram_posts(
                         channel_username or DEFAULT_TELEGRAM_CHANNEL,
                         int(post_limit),
                     )
+                    saved_items = collection_result["saved_posts"]
                 else:
-                    saved_items = collect_telegram_comments(
+                    collection_result = collect_telegram_comments(
                         channel_username or DEFAULT_TELEGRAM_CHANNEL,
                         int(post_limit),
                     )
-            st.success(f"Collection completed.\n\nSaved items: {saved_items}")
+                    saved_items = collection_result["saved_comments"]
+                reload_collected_data_source(data_source)
+            summary_lines = [
+                "Collection completed.",
+                f"Requested logical posts: {collection_result.get('requested_logical_posts', int(post_limit))}",
+                f"Raw Telegram messages scanned: {collection_result['raw_messages_scanned']}",
+                f"Logical posts scanned: {collection_result['logical_posts_scanned']}",
+            ]
+            if "posts_with_comments" in collection_result:
+                summary_lines.append(
+                    f"Posts with comments: {collection_result['posts_with_comments']}"
+                )
+            summary_lines.extend(
+                [
+                    f"Saved items: {saved_items}",
+                    f"Channel username: {collection_result.get('channel_username', channel_username or DEFAULT_TELEGRAM_CHANNEL)}",
+                    f"Output file: {collection_result.get('output_file', '')}",
+                ]
+            )
+            st.session_state.telegram_collection_summary = {
+                "data_source": data_source,
+                "message": "\n\n".join(summary_lines),
+            }
+            st.session_state.telegram_last_collected_params = current_params
+            st.rerun()
         except Exception as error:
             st.error(str(error))
+
+    return collection_is_stale
 
 
 def show_sentiment_distribution(stats: dict) -> None:
@@ -428,8 +576,9 @@ def render_analysis_page() -> None:
         key="data_source",
     )
     data_source_available = True
+    telegram_collection_is_stale = False
     if data_source in {"Telegram posts", "Telegram comments"}:
-        render_telegram_collection_controls(data_source)
+        telegram_collection_is_stale = render_telegram_collection_controls(data_source)
 
     if data_source == "Telegram posts":
         data_source_available = render_telegram_posts_status()
@@ -443,6 +592,13 @@ def render_analysis_page() -> None:
             st.session_state.topic = quick_topic.lower()
 
     topic = st.text_input("Тема для анализа", key="topic")
+    analyze_all = st.checkbox(
+        "Analyze all loaded messages/comments",
+        value=False,
+        key="analyze_all_messages",
+    )
+    if analyze_all:
+        st.info("Topic filter is disabled. The full loaded dataset will be analysed.")
     st.caption("You can select a quick topic or type any custom topic manually.")
 
     st.subheader("Analysis mode")
@@ -454,7 +610,15 @@ def render_analysis_page() -> None:
     )
 
     st.subheader("Отчёт")
-    if st.button("Запустить анализ"):
+    run_analysis = st.button(
+        "Запустить анализ",
+        disabled=telegram_collection_is_stale,
+    )
+    if run_analysis:
+        if telegram_collection_is_stale:
+            st.warning("Please refresh Telegram data first.")
+            return
+
         if data_source in {"Telegram posts", "Telegram comments"} and not data_source_available:
             return
 
@@ -471,12 +635,21 @@ def render_analysis_page() -> None:
                 )
             return
 
-        analyzed_messages = analyze_messages(topic)
+        analysis_topic = ALL_MESSAGES_TOPIC if analyze_all else topic
+        analyzed_messages = (
+            analyze_all_loaded_messages()
+            if analyze_all
+            else analyze_messages(topic)
+        )
         stats = calculate_sentiment_stats(analyzed_messages)
-        report = generate_report(topic)
+        report = (
+            generate_loaded_dataset_report(analyzed_messages)
+            if analyze_all
+            else generate_report(topic)
+        )
         dominant_sentiment = localize_sentiment(stats["dominant_sentiment"])
         insert_analysis_run(
-            topic=topic,
+            topic=analysis_topic,
             total_messages=stats["total"],
             positive_count=stats["positive_count"],
             neutral_count=stats["neutral_count"],
@@ -516,7 +689,7 @@ def render_analysis_page() -> None:
                         ]
                         ai_report = generate_ai_insight(
                             messages,
-                            topic=topic,
+                            topic=analysis_topic,
                             source=data_source,
                             analysed_message_count=stats["total"],
                             positive_count=stats["positive_count"],
