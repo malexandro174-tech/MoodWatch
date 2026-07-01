@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from telethon import TelegramClient
 from telethon.network.connection.tcpabridged import ConnectionTcpAbridged
 
+from telegram_storage import normalize_channel_username, save_channel_posts
+
 
 OUTPUT_PATH = Path("data") / "telegram_messages.json"
 
@@ -76,6 +78,7 @@ async def collect_logical_posts(client, channel_username: str, limit: int) -> tu
 async def collect_telegram_posts_async(channel_username: str, limit: int) -> dict:
     """Collect latest Telegram channel posts and save them to JSON."""
     load_dotenv()
+    normalized_channel = normalize_channel_username(channel_username)
 
     api_id = int(os.getenv("TELEGRAM_API_ID"))
     api_hash = os.getenv("TELEGRAM_API_HASH")
@@ -89,7 +92,7 @@ async def collect_telegram_posts_async(channel_username: str, limit: int) -> dic
 
         messages, raw_messages_scanned = await collect_logical_posts(
             client,
-            channel_username,
+            normalized_channel,
             limit,
         )
 
@@ -98,12 +101,26 @@ async def collect_telegram_posts_async(channel_username: str, limit: int) -> dic
             json.dumps(messages, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        channel_output_path = save_channel_posts(
+            normalized_channel,
+            messages,
+            {
+                "requested_logical_posts": limit,
+                "raw_telegram_messages_scanned": raw_messages_scanned,
+                "logical_posts_scanned": len(messages),
+                "posts_with_comments": 0,
+                "saved_items": len(messages),
+            },
+        )
 
         return {
+            "requested_logical_posts": limit,
             "raw_messages_scanned": raw_messages_scanned,
             "logical_posts_scanned": len(messages),
             "saved_posts": len(messages),
+            "channel_username": normalized_channel,
             "output_file": str(OUTPUT_PATH),
+            "channel_output_file": str(channel_output_path),
         }
     finally:
         await client.disconnect()

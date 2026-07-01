@@ -1,0 +1,10 @@
+{
+  "channel_username": "military_zB",
+  "collected_at": "2026-07-01T15:11:48.585191+00:00",
+  "requested_logical_posts": 10,
+  "raw_telegram_messages_scanned": 15,
+  "logical_posts_scanned": 10,
+  "posts_with_comments": 6,
+  "saved_items": 146,
+  "source_type": "telegram"
+}

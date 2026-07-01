@@ -8,6 +8,8 @@ from telethon import TelegramClient
 from telethon.errors import RPCError
 from telethon.network.connection.tcpabridged import ConnectionTcpAbridged
 
+from telegram_storage import normalize_channel_username, save_channel_comments
+
 
 DEFAULT_CHANNEL_NAME = "Veles_Dubov"
 DEFAULT_POST_LIMIT = 10
@@ -144,6 +146,7 @@ async def fetch_comments_for_post(client, channel, channel_name, logical_post):
 async def collect_telegram_comments_async(channel_name: str, post_limit: int) -> dict:
     """Collect Telegram comments and save them to JSON."""
     load_dotenv()
+    normalized_channel = normalize_channel_username(channel_name)
 
     api_id = int(os.getenv("TELEGRAM_API_ID"))
     api_hash = os.getenv("TELEGRAM_API_HASH")
@@ -156,8 +159,8 @@ async def collect_telegram_comments_async(channel_name: str, post_limit: int) ->
         if not await client.is_user_authorized():
             raise RuntimeError("Telegram session is not authorized. Run src/telegram_test.py first.")
 
-        print(f"Scanning latest {post_limit} posts from {channel_name}...")
-        channel = await client.get_entity(channel_name)
+        print(f"Scanning latest {post_limit} posts from {normalized_channel}...")
+        channel = await client.get_entity(normalized_channel)
         results = []
         logical_posts, raw_messages_scanned = await collect_logical_posts(
             client,
@@ -183,7 +186,7 @@ async def collect_telegram_comments_async(channel_name: str, post_limit: int) ->
             comments = await fetch_comments_for_post(
                 client,
                 channel,
-                channel_name,
+                normalized_channel,
                 logical_post,
             )
             unique_comments = []
@@ -205,6 +208,17 @@ async def collect_telegram_comments_async(channel_name: str, post_limit: int) ->
             json.dumps(results, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        channel_output_path = save_channel_comments(
+            normalized_channel,
+            results,
+            {
+                "requested_logical_posts": post_limit,
+                "raw_telegram_messages_scanned": raw_messages_scanned,
+                "logical_posts_scanned": len(logical_posts),
+                "posts_with_comments": posts_with_comments,
+                "saved_items": len(results),
+            },
+        )
 
         return {
             "requested_logical_posts": post_limit,
@@ -212,8 +226,9 @@ async def collect_telegram_comments_async(channel_name: str, post_limit: int) ->
             "logical_posts_scanned": len(logical_posts),
             "posts_with_comments": posts_with_comments,
             "saved_comments": len(results),
-            "channel_username": channel_name,
+            "channel_username": normalized_channel,
             "output_file": str(OUTPUT_PATH),
+            "channel_output_file": str(channel_output_path),
         }
     finally:
         await client.disconnect()

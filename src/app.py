@@ -22,8 +22,9 @@ from storage import (
     get_raw_messages,
     insert_analysis_run,
 )
-from telegram_collect_test import collect_telegram_posts
 from telegram_comments_collector import collect_telegram_comments
+from telegram_posts_collector import collect_telegram_posts
+from telegram_storage import normalize_channel_username
 
 
 DEFAULT_TOPIC = "искусственный интеллект"
@@ -296,7 +297,9 @@ def build_telegram_collection_params(
     """Build comparable Telegram collection settings for session state."""
     return {
         "data_source": data_source,
-        "channel_username": channel_username or DEFAULT_TELEGRAM_CHANNEL,
+        "channel_username": normalize_channel_username(
+            channel_username or DEFAULT_TELEGRAM_CHANNEL
+        ),
         "post_limit": int(post_limit),
     }
 
@@ -314,6 +317,15 @@ def is_telegram_collection_stale(current_params: dict) -> bool:
             or int(last_params.get("post_limit", 0)) != current_params["post_limit"]
         )
     )
+
+
+def render_telegram_collection_summary(data_source: str) -> None:
+    """Render the latest Telegram collection summary in a stable UI block."""
+    summary_state = st.session_state.get("telegram_collection_summary")
+    if not summary_state or summary_state.get("data_source") != data_source:
+        return
+
+    st.success(summary_state["message"])
 
 
 def get_telegram_posts_status() -> dict:
@@ -361,12 +373,17 @@ def render_telegram_posts_status() -> bool:
         st.warning("Telegram data file is missing or empty. Run the Telegram collector first.")
         return False
 
-    st.caption("Данные Telegram")
-    st.write("Source file: data/telegram_messages.json")
-    st.write(f"Loaded messages: {len(messages)}")
-    st.write(f"Channels: {', '.join(status['channels'])}")
-    st.write(
-        f"Date range: {status['earliest_date']} → {status['latest_date']}"
+    st.markdown(
+        "\n".join(
+            [
+                "#### Данные Telegram",
+                "",
+                "- Source file: data/telegram_messages.json",
+                f"- Loaded messages: {len(messages)}",
+                f"- Channels: {', '.join(status['channels'])}",
+                f"- Date range: {status['earliest_date']} → {status['latest_date']}",
+            ]
+        )
     )
     return True
 
@@ -427,13 +444,18 @@ def render_telegram_comments_status() -> bool:
         )
         return False
 
-    st.caption("Комментарии Telegram")
-    st.write("Source file: data/telegram_comments.json")
-    st.write(f"Loaded comments: {len(comments)}")
-    st.write(f"Channels: {', '.join(status['channels'])}")
-    st.write(f"Related posts: {status['related_posts']}")
-    st.write(
-        f"Date range: {status['earliest_date']} → {status['latest_date']}"
+    st.markdown(
+        "\n".join(
+            [
+                "#### Комментарии Telegram",
+                "",
+                "- Source file: data/telegram_comments.json",
+                f"- Loaded comments: {len(comments)}",
+                f"- Channels: {', '.join(status['channels'])}",
+                f"- Related posts: {status['related_posts']}",
+                f"- Date range: {status['earliest_date']} → {status['latest_date']}",
+            ]
+        )
     )
     return True
 
@@ -463,19 +485,6 @@ def render_telegram_collection_controls(data_source: str) -> bool:
     st.session_state.telegram_collection_params = current_params
     collection_is_stale = is_telegram_collection_stale(current_params)
 
-    summary_state = st.session_state.get("telegram_collection_summary")
-    if (
-        summary_state
-        and summary_state.get("data_source") == data_source
-        and not collection_is_stale
-    ):
-        st.success(summary_state["message"])
-
-    if collection_is_stale:
-        st.warning(
-            "Collection settings changed. Click 'Collect / Refresh data' before running analysis."
-        )
-
     if st.button("Collect / Refresh data"):
         try:
             with st.spinner("Collecting Telegram data..."):
@@ -492,6 +501,11 @@ def render_telegram_collection_controls(data_source: str) -> bool:
                     )
                     saved_items = collection_result["saved_comments"]
                 reload_collected_data_source(data_source)
+            item_label = (
+                "Loaded comments"
+                if data_source == "Telegram comments"
+                else "Loaded posts"
+            )
             summary_lines = [
                 "Collection completed.",
                 f"Requested logical posts: {collection_result.get('requested_logical_posts', int(post_limit))}",
@@ -504,9 +518,10 @@ def render_telegram_collection_controls(data_source: str) -> bool:
                 )
             summary_lines.extend(
                 [
-                    f"Saved items: {saved_items}",
+                    f"{item_label}: {saved_items}",
                     f"Channel username: {collection_result.get('channel_username', channel_username or DEFAULT_TELEGRAM_CHANNEL)}",
                     f"Output file: {collection_result.get('output_file', '')}",
+                    f"Channel output file: {collection_result.get('channel_output_file', '')}",
                 ]
             )
             st.session_state.telegram_collection_summary = {
@@ -514,9 +529,16 @@ def render_telegram_collection_controls(data_source: str) -> bool:
                 "message": "\n\n".join(summary_lines),
             }
             st.session_state.telegram_last_collected_params = current_params
-            st.rerun()
+            collection_is_stale = False
         except Exception as error:
             st.error(str(error))
+
+    if collection_is_stale:
+        st.warning(
+            "Collection settings changed. Click 'Collect / Refresh data' before running analysis."
+        )
+    else:
+        render_telegram_collection_summary(data_source)
 
     return collection_is_stale
 
